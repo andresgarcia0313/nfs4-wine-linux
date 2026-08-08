@@ -123,7 +123,29 @@ NGLIDE_RESOLUTION=1
 NGLIDE_ASPECT=1
 ```
 
-No instales nGlide por separado: el parche ya trae su propia versión.
+**Actualiza nGlide**: el `glide3x.dll` que trae el parche es de **marzo de 2016**. Sustituirlo por **nGlide 2.10** cambia mucho más que la nitidez — desbloquea las resoluciones de render altas. Con el original el juego solo ofrece 640x480; con el 2.10 llega hasta **1600x1200**.
+
+```bash
+D="/opt/games/Need For Speed IV High Stakes"
+mv "$D/drivers/nglide/glide3x.dll" "$D/drivers/nglide/backup_glide3x.dll"   # revertir = mv al revés
+curl -O https://www.zeus-software.com/files/nglide/nGlide210_setup.exe
+7z x nGlide210_setup.exe -oextraido && cp extraido/glide3x.dll "$D/drivers/nglide/"
+```
+
+### Qué resolución poner
+
+El juego renderiza a la resolución que elijas y nGlide la escala a tu pantalla. El coste crece con el número de píxeles:
+
+| Resolución | Píxeles | Coste | |
+|---|---|---|---|
+| 640x480 | 307.200 | 1,00x | lo que da el parche sin actualizar |
+| 800x600 | 480.000 | 1,56x | margen de sobra |
+| **1024x768** | **786.432** | **2,56x** | **el equilibrio recomendado** |
+| 1600x1200 | 1.920.000 | 6,25x | se nota la caída en gráficas integradas |
+
+En una Intel Iris Xe, **1024x768 es el punto dulce**: cuadruplica el detalle frente al original y mantiene los 64 FPS que el motor da como techo por diseño. A 1600x1200 la fluidez cae de forma perceptible.
+
+Y pon **`NGLIDE_VSYNC=0`**: el motor corre a 64 FPS internos y la pantalla a 60 Hz, así que el vsync los desincroniza y produce tirones. Es lo que hace el instalador oficial de Lutris.
 
 ### 3. Carga SilentPatch con un override
 
