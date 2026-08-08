@@ -1,0 +1,12 @@
+# Nunca material con copyright
+*.iso
+*.bin
+*.cue
+*.7z
+*.zip
+*.exe
+*.dll
+*.asi
+prefix/
+data/
+savedata/

@@ -1,0 +1,6 @@
+# El motor lee los .ini tal cual vienen del parche: si git los normaliza a LF, la
+# instalación se rompe para quien clone el repositorio.
+*.ini -text
+*.sh text eol=lf
+*.md text eol=lf
+*.jpg binary
