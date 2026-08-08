@@ -135,9 +135,29 @@ export WINEDLLOVERRIDES="mscoree,mshtml=;dinput=n,b"
 
 Sin `dinput=n,b`, SilentPatch queda inerte y `SingleProcAffinity=1` pasa a atenderlo la implementación del Modern Patch, que **ata todo el proceso a un solo núcleo** en vez de solo los hilos problemáticos. Se paga el coste sin recibir el beneficio, y no hay ningún síntoma visible que lo delate. Además, SilentPatch arregla el polling del mando, que es justo lo que se rompe bajo Wine.
 
-### 4. Apaga el Triple Buffer antes de nada
+### 4. No toques la resolución desde el menú del juego
 
-Es el fallo más citado de este juego y el más traicionero: con Triple Buffer activado el juego revienta con `AMF=5 screen.c(563)`, **y el ajuste queda grabado en `savedata/config.dat`**, así que a partir de ahí falla siempre, incluso reinstalando el ejecutable. Si ya te ha pasado: borra `savedata/config.dat` y vuelve a empezar.
+Este es el error que te va a costar una partida, así que léelo antes de jugar.
+
+El juego ya sale a la resolución de tu escritorio: nGlide se encarga de escalarlo. **Si además subes la resolución en *Opciones → Gráficos*, el juego revienta** con este diálogo:
+
+```
+Abort message:
+AMF=5 screen.c(563)
+```
+
+Lo mismo pasa con el *Triple Buffer* activado. Y lo verdaderamente traicionero: **el ajuste ya se ha grabado en `savedata/config.dat`**, así que a partir de ahí el juego falla siempre, aunque reinstales el ejecutable.
+
+**Rescate** (no pierdes ni el progreso ni los coches: eso vive en `savedata/DB/`, no en `config.dat`):
+
+```bash
+pkill -x nfs4.exe; wineserver -k
+rm "/opt/games/Need For Speed IV High Stakes/savedata/config.dat"
+```
+
+El juego lo regenera con los valores por defecto en el siguiente arranque.
+
+**¿Y si quiero más nitidez de verdad?** Con nGlide el juego renderiza a 640x480 y se estira, así que se ve suave pero borroso. Para render nativo a mayor resolución la vía estable es `ThrashDriver=dx7`, que llega hasta **1280x960** sin este fallo — a cambio de que el menú se quede pequeño en una esquina. Nunca pases de 1280x960: por encima, el motor deja de cargar las pistas.
 
 ---
 
@@ -153,7 +173,7 @@ Es el fallo más citado de este juego y el más traicionero: con Triple Buffer a
 
 | Síntoma | Causa | Solución |
 |---|---|---|
-| **`AMF=5 screen.c(563)` y salida al escritorio** | Triple Buffering activado; queda grabado en `config.dat` | *Opciones → Gráficos → Triple Buffer = No*. Si ya falla siempre, **borra `savedata/config.dat`** |
+| **`AMF=5 screen.c(563)` y salida al escritorio** | Subir la resolución desde el menú del juego, o el Triple Buffering. Queda grabado en `config.dat`, así que a partir de ahí falla siempre | **Borra `savedata/config.dat`** y no vuelvas a tocar la resolución. El progreso no se pierde: vive en `savedata/DB/` |
 | El juego no arranca con los ejecutables originales | SafeDisc 1.06 embebido | Instalación portable con Modern Patch (nunca el `.exe` del CD) |
 | **Se congela al entrar al menú principal** | Bug de hilos en el decodificador de vídeo. Es el fallo característico de NFS4, no existe en NFS3 | `NoMovies=1` en `nfs4.ini`, o renombra `data/movies` |
 | `could not load kernel32.dll, status c0000135` | El juego es PE32 y el prefijo no tiene `syswow64` poblado | `ls $WINEPREFIX/drive_c/windows/syswow64/ \| wc -l` debe dar cientos. Si da 0, borra el prefijo y recréalo **sin interrumpir** |
