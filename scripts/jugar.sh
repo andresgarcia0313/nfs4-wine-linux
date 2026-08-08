@@ -29,7 +29,7 @@ vigilante() {
     echo "vigilante desactivado: faltan xdotool o imagemagick" >&2; return; }
   export DISPLAY="${DISPLAY:-:0}"              # XWayland no siempre es :0
 
-  local negras=0 ciegas=0 wid="" medio=""
+  local negras=0 ciegas=0 armado=0 wid="" medio=""
   sleep 25                                     # margen para el arranque
   while pgrep -x 'nfs4.exe' >/dev/null 2>&1; do
     wid=$(xdotool search --name "Need For Speed" 2>/dev/null | head -1)
@@ -39,11 +39,14 @@ vigilante() {
     case "$medio" in
       "(0,0,0)"|"#000000"|"(0,0,0,255)"|"srgb(0,0,0)") negras=$((negras+1)); ciegas=0 ;;
       "")                                              ciegas=$((ciegas+1)) ;;
-      *)                                               negras=0; ciegas=0 ;;
+      *)                                               negras=0; ciegas=0; armado=1 ;;
     esac
+    # El vigilante NO se arma hasta haber visto al menos un fotograma con contenido.
+    # Sin esto mata el juego durante la intro: los vídeos arrancan en negro y cumplen
+    # la condición de disparo antes de que el juego haya dibujado nada.
     # 4 muestras negras = 8 s sin dibujar. 150 capturas fallidas seguidas (5 min) = el
     # vigilante está ciego; se retira en vez de quedarse girando para siempre.
-    if [ "$negras" -ge 4 ]; then
+    if [ "$armado" -eq 1 ] && [ "$negras" -ge 4 ]; then
       pkill -x 'nfs4.exe' 2>/dev/null
       sleep 2
       pgrep -x 'nfs4.exe' >/dev/null && pkill -9 -x 'nfs4.exe' 2>/dev/null
