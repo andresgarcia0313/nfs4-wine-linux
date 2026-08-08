@@ -10,3 +10,6 @@
 prefix/
 data/
 savedata/
+
+# notas internas de sesión, nunca deben publicarse
+.memsearch/
