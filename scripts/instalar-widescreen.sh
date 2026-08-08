@@ -4,8 +4,8 @@
 #
 #   ./instalar-widescreen.sh [directorio-del-juego]
 #
-# Se instala EN PARALELO: crea un nfs4ws.exe con su propio lanzador y no toca
-# ni el nfs4.exe ni el renderizador de la instalación 4:3, que sigue disponible.
+# Se instala EN PARALELO: añade un nfs4ws.exe y no toca ni el nfs4.exe ni el
+# renderizador de la instalación 4:3, que sigue disponible con "jugar.sh --43".
 # Desinstalar = borrar los archivos que crea (ver el final del script).
 #
 set -uo pipefail
@@ -69,21 +69,20 @@ verde "    hecho"
 azul "6/6  Configuración y lanzador propios"
 # El Modern Patch busca primero <nombre-del-exe>.ini: así ambos modos conviven sin pisarse.
 sed 's/^ThrashDriver=.*/ThrashDriver=voodoo2a-ws\r/' "$D/nfs4.ini" > "$D/nfs4ws.ini"
-sed 's/nfs4\.exe/nfs4ws.exe/g' "$D/jugar.sh" > "$D/jugar-ws.sh"
-chmod +x "$D/jugar-ws.sh"
-bash -n "$D/jugar-ws.sh" || morir "el lanzador generado tiene errores de sintaxis"
-verde "    jugar-ws.sh listo"
+verde "    nfs4ws.ini listo"
+# jugar.sh detecta nfs4ws.exe y arranca en 16:9 sin más; --43 fuerza el modo original.
+grep -q 'nfs4ws.exe' "$D/jugar.sh" || aviso "    tu jugar.sh es antiguo: actualízalo desde scripts/jugar.sh"
 
 echo
 verde "Widescreen instalado."
 echo
-echo "  16:9   \"$D/jugar-ws.sh\""
-echo "  4:3    \"$D/jugar.sh\"        (intacto, como estaba)"
+echo "  16:9   \"$D/jugar.sh\"          (a partir de ahora, por defecto)"
+echo "  4:3    \"$D/jugar.sh\" --43     (sigue disponible, intacto)"
 echo
 aviso "  Dentro del juego: Wide Screen = Off, View Angle = Wide, Cámara 1 = High."
 aviso "  NO toques la resolución ni el Z-Buffer: rompen la partida y corrompen config.dat."
 echo
 echo "  Desinstalar:"
-echo "    rm -f '$D'/{nfs4ws.exe,nfs4ws.ini,nfshs-widescreen.ini,jugar-ws.sh,glide3x.dll,Drivers}"
+echo "    rm -f '$D'/{nfs4ws.exe,nfs4ws.ini,nfshs-widescreen.ini,glide3x.dll,Drivers}"
 echo "    rm -f '$D'/drivers/{voodoo2a.dll,glide3x.dll}"
 echo "    rm -rf '$D/drivers/voodoo2a-ws'"

@@ -191,12 +191,14 @@ El juego lo regenera con los valores por defecto en el siguiente arranque.
 ./scripts/instalar-widescreen.sh
 ```
 
-Se instala **en paralelo**: crea un `nfs4ws.exe` con su propio lanzador y **no toca** tu instalación 4:3. Tendrás las dos:
+Se instala **en paralelo**: añade un `nfs4ws.exe` y **no toca** tu instalación 4:3. A partir de ahí, `jugar.sh` arranca en 16:9 y el modo original sigue a un parámetro de distancia:
 
+```bash
+jugar.sh          # 16:9
+jugar.sh --43     # 4:3 original
 ```
-jugar.sh       4:3 original
-jugar-ws.sh    16:9
-```
+
+El acceso directo del menú de aplicaciones abre en 16:9; con clic derecho tienes **"Abrir en 4:3"**.
 
 ### Por qué esto sí funciona y lo demás no
 

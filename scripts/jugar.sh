@@ -2,9 +2,12 @@
 # Need For Speed IV: High Stakes (Road Challenge)
 # Wine 11 + Modern Patch de VEG v0.1.0 + SilentPatchNFS90s BUILD-1
 #
+#   ./jugar.sh          16:9 si está instalado el widescreen, 4:3 si no
+#   ./jugar.sh --43     fuerza 4:3 aunque el widescreen esté instalado
+#
 # El juego NO cierra limpio bajo Wine: al pulsar "Salir" deja de dibujar (pantalla negra)
 # pero el proceso sigue vivo quemando un núcleo. Mismo bug que en NFS III. El vigilante
-# de abajo lo remata solo. Alt+F4 sí cierra limpiamente.
+# de abajo lo remata solo. Alt+F4 cierra bien, salvo dentro de una carrera.
 
 DIR="$(dirname "$(readlink -f "$0")")"
 export WINEPREFIX="$DIR/prefix"
@@ -16,6 +19,16 @@ export WINEDEBUG=-all
 #                   de VEG, que ata todo el proceso a un solo núcleo en vez de solo los
 #                   hilos problemáticos. Además arregla el polling del mando bajo Wine.
 export WINEDLLOVERRIDES="mscoree,mshtml=;dinput=n,b"
+
+# --- Elección de modo -------------------------------------------------------------
+# El widescreen es un ejecutable aparte con su propio .ini (el Modern Patch busca primero
+# <nombre-del-exe>.ini). Ambos modos conviven; aquí solo se decide cuál arrancar.
+EXE=nfs4.exe
+if [ "${1:-}" = "--43" ]; then
+  shift
+elif [ -f "$DIR/nfs4ws.exe" ]; then
+  EXE=nfs4ws.exe
+fi
 
 cd "$DIR" || exit 1         # obligatorio: el juego busca sus datos en el directorio de trabajo
 wineserver -k 2>/dev/null   # idempotente: el juego admite una sola instancia
@@ -31,7 +44,7 @@ vigilante() {
 
   local negras=0 ciegas=0 armado=0 wid="" medio=""
   sleep 25                                     # margen para el arranque
-  while pgrep -x 'nfs4.exe' >/dev/null 2>&1; do
+  while pgrep -x "$EXE" >/dev/null 2>&1; do
     wid=$(xdotool search --name "Need For Speed" 2>/dev/null | head -1)
     medio=""
     [ -n "$wid" ] && medio=$(import -window "$wid" -resize 1x1 -depth 8 txt:- 2>/dev/null \
@@ -47,9 +60,9 @@ vigilante() {
     # 4 muestras negras = 8 s sin dibujar. 150 capturas fallidas seguidas (5 min) = el
     # vigilante está ciego; se retira en vez de quedarse girando para siempre.
     if [ "$armado" -eq 1 ] && [ "$negras" -ge 4 ]; then
-      pkill -x 'nfs4.exe' 2>/dev/null
+      pkill -x "$EXE" 2>/dev/null
       sleep 2
-      pgrep -x 'nfs4.exe' >/dev/null && pkill -9 -x 'nfs4.exe' 2>/dev/null
+      pgrep -x "$EXE" >/dev/null && pkill -9 -x "$EXE" 2>/dev/null
       wineserver -k 2>/dev/null
       return
     fi
@@ -60,10 +73,10 @@ vigilante() {
 vigilante &
 VIGIA=$!
 
-wine nfs4.exe "$@"          # sin exec: hay que volver aquí para limpiar
+wine "$EXE" "$@"            # sin exec: hay que volver aquí para limpiar
 
 # --- Limpieza ---------------------------------------------------------------------
 kill "$VIGIA" 2>/dev/null
 sleep 1
-pgrep -x 'nfs4.exe' >/dev/null && { pkill -x 'nfs4.exe'; sleep 1; }
+pgrep -x "$EXE" >/dev/null && { pkill -x "$EXE"; sleep 1; }
 wineserver -k 2>/dev/null
