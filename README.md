@@ -183,6 +183,53 @@ El juego lo regenera con los valores por defecto en el siguiente arranque.
 
 ---
 
+## Widescreen 16:9 (opcional, pero funciona)
+
+![16:9 a pantalla completa](images/06-widescreen-16-9.jpg)
+
+```bash
+./scripts/instalar-widescreen.sh
+```
+
+Se instala **en paralelo**: crea un `nfs4ws.exe` con su propio lanzador y **no toca** tu instalación 4:3. Tendrás las dos:
+
+```
+jugar.sh       4:3 original
+jugar-ws.sh    16:9
+```
+
+### Por qué esto sí funciona y lo demás no
+
+Es contraintuitivo, así que conviene entenderlo antes de perder una tarde como la perdí yo:
+
+**El 16:9 no lo da el renderizador. Lo da el ejecutable.** Comparado byte a byte, el `nfs4.exe` de Ravage se diferencia del que trae el Modern Patch en **9 bytes**, y tres de ellos son un único número decimal: la constante que convierte grados a radianes, multiplicada por 1,177. Todo el widescreen es eso — ampliar el ángulo de visión.
+
+El segundo componente es un DLL que se hace pasar por renderizador: corrige la proporción y delega en el Glide real. Resultó ser, byte a byte, el *widescreen fix* de **Felix Krull**, cuyo repositorio de GitLab lleva caído desde 2024; sobrevive dentro de este paquete. Su autor recomienda **expresamente usarlo con nGlide**.
+
+De ahí la conclusión que ahorra tiempo: **funciona con el `glide3x.dll` que ya tienes**, y no necesita dgVoodoo, DirectX 9 ni D7VK. Yo probé nueve combinaciones de renderizador y driver gráfico antes de averiguarlo, y ninguna funcionó:
+
+| Renderizador | Driver de Wine | Extra | Resultado |
+|---|---|---|---|
+| **nglide** | **x11** | — | **Funciona** (4:3, y 16:9 con este fix) |
+| nglide | wayland | — | Funciona, sin ventaja |
+| dx7 | x11 | — | Render en un recuadro + artefactos |
+| dx7 / dx8 | wayland | — | Pantalla negra |
+| dx7 | x11 | `EmulateModeset` | Pantalla negra |
+| dx7 | x11 | D7VK 2.0 | Dibuja, sigue en recuadro |
+| dx7 | wayland | D7VK 2.0 | El proceso se cierra solo |
+
+La causa de fondo: la **API Glide no tiene ni un solo modo 16:9**, y el driver X11 de Wine no escala —espera un cambio de modo real que bajo Wayland nunca ocurre—, de ahí el recuadro.
+
+### Ajustes y límites
+
+Dentro del juego: **Wide Screen = Off**, **View Angle = Wide**, **Cámara 1 = High**.
+
+**No toques la resolución ni el Z-Buffer**: el readme del paquete lo advierte y coincide con el `AMF=5 screen.c(563)` que corrompe `config.dat`.
+
+Defectos conocidos que no tienen arreglo: el **HUD y los marcadores salen algo más anchos** (son elementos 2D y el estirado los alcanza), la pantalla partida queda mal ajustada, y F11/F12 rompen la corrección. Hay quien reporta **caída de FPS con coches de muchos polígonos** — medido en una Intel Iris Xe, la GPU se queda en el 10-15%, así que aquí no se reprodujo.
+
+---
+
 ## Capturas
 
 | | |
@@ -242,6 +289,7 @@ instalar.sh                  Instalación completa en un comando
 scripts/jugar.sh             Lanzador con el vigilante de salida
 config/nfs4.ini              Configuración verificada
 config/nglide-thrash.ini     Escalado del renderizador
+scripts/instalar-widescreen.sh  Widescreen 16:9 (opcional, en paralelo)
 ```
 
 ---
